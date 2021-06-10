@@ -1,0 +1,252 @@
+#Artigo Conversas e Controvérsias ####
+
+#Ativar o pacote Haven (Importação) e importar a base de dados do Lapop 2017
+library(haven)
+X780314464Brazil_LAPOP_AmericasBarometer_2017_V1_0_W <-
+  read_dta("C:/Users/vgmm2/Desktop/PIBIC/Dados/
+           780314464Brazil LAPOP AmericasBarometer 2017 V1.0_W.dta")
+
+#Reduzir a base apenas para as variáveis que serão utilizadas
+lapop17 <- subset(Bra2017, 
+                  select = c(q1, q2, jc10, jc13, ing4, bragrup1, 
+                             bragrup2, bragrup3, bragrup4, bragrup5, brad8, 
+                             brad9, brad10, ed, q10new))
+View(lapop17)
+
+save(lapop17, file = "lapop17.RData")
+
+#Ativar pacotes para permitir editar labels e comando recode
+library(memisc)
+library(labelled)
+
+#Variáveis sociodemográficas
+
+#Sexo -> 1 = homem / 2 = mulher
+val_labels(lapop17$q1) <- NULL
+lapop17$Sexo <- recode(lapop17$q1, "Homem" <- c(1), "Mulher" <- c(2))
+lapop17$Sexo <- as.factor(lapop17$Sexo)
+
+#Faixa Etária
+val_labels(lapop17$q2) <- NULL
+lapop17$FxEt <- cut(lapop17$q2, c(15,24,34,44,60,90), 
+                    labels = c("De 16 a 24 anos", "De 24 a 34 anos", 
+                               "De 35 a 44 anos", "De 45 a 60 anos", 
+                               "Mais de 60 anos"))
+
+#Faixa de renda familiar
+val_labels(lapop17$q10new) <- NULL
+lapop17$FxRe <- cut(lapop17$q10new, c(-1, 3, 12, 14, 17), 
+                    labels = c("Até R$ 1050", "De R$ 1051 até R$ 3150", 
+                               "De R$ 3151 até R$ 4950", "Maior de R$ 4951"))
+
+#Recodificar as variáveis de anos de estudo em escolaridade, 
+#reduzir em nenhuma (0), baixa (1 ao 8), média (9 ao 11) e alta (12 ao 18)
+val_labels(lapop17$ed) <- NULL
+lapop17$Escol <- cut(lapop17$ed, 
+                     c(-1,0,8,11,18), labels = 
+                       c("Nenhuma", "Baixa", "Média", "Alta"))
+
+#Variáveis de adesão à democracia
+
+#Adesão à democracia - Churchilliana
+val_labels(lapop17$ing4) <- NULL
+lapop17$absdem <- cut(lapop17$ing4, c(0, 2, 5, 8), 
+                      labels = c("Não-democrata", "Ambivalente", "Democrata"))
+
+#Golpe militar em caso de muito crime (JC10) / 1 = democratas | 
+#0 = antidemocráticos(não-democráticos)
+val_labels(lapop17$jc10) <- NULL
+lapop17$golcri <- recode(lapop17$jc10, 0 <- c(1), 1 <- c(2))
+
+#Golpe militar em caso de muita corrupçãoo (JC13) / 1 = democratas | 
+#0 = antidemocráticos(não-democráticos)
+val_labels(lapop17$jc13) <- NULL
+lapop17$golcor <- recode(lapop17$jc13, 0 <- c(1), 1 <- c(2))
+
+#Juntar as variáveis golcri(jc10) e golcor (jc13)
+lapop17$golpe <- paste(lapop17$golcor,lapop17$golcri)
+lapop17$golpe <- recode(lapop17$golpe, 1 <- 
+                          c("NA 1", "1 NA"), 0 <- c("NA 0", "0 NA"))
+lapop17$golpe <- recode(lapop17$golpe, "Contrário" <- c(1), "Favorável" <- c(0))
+
+#Variáveis de Tolerância
+
+val_labels(lapop17$bragrup1) <- NULL
+val_labels(lapop17$bragrup2) <- NULL
+val_labels(lapop17$bragrup3) <- NULL
+val_labels(lapop17$bragrup4) <- NULL
+val_labels(lapop17$bragrup5) <- NULL
+
+lapop17$g1I <- recode(lapop17$bragrup1, 1 <- c(10), 2 <- c(9), 
+                        3 <- c(8), 4 <- c(7), 5 <- c(6), 6 <- c(5), 7 <- c(4), 
+                        8 <- c(3), 9 <- c(2), 10 <- c(1))#inversão 
+#dos valores para uso da 
+#função MAX, pois na escala original o 10 significa "gosto muito". 
+#Para aplicar a função MAX preciso que 10 seja igual a desgosto muito.
+#No nome G1I, o I significa invertido.
+
+lapop17$g2I <- recode(lapop17$bragrup2, 1 <- c(10), 2 <- c(9), 
+                        3 <- c(8), 4 <- c(7), 5 <- c(6), 6 <- c(5), 7 <- c(4), 
+                        8 <- c(3), 9 <- c(2), 10 <- c(1)) 
+
+lapop17$g3I <- recode(lapop17$bragrup3, 1 <- c(10), 2 <- c(9), 
+                        3 <- c(8), 4 <- c(7), 5 <- c(6), 6 <- c(5), 7 <- c(4), 
+                        8 <- c(3), 9 <- c(2), 10 <- c(1)) 
+
+lapop17$g4I <- recode(lapop17$bragrup4, 1 <- c(10), 2 <- c(9), 
+                        3 <- c(8), 4 <- c(7), 5 <- c(6), 6 <- c(5), 7 <- c(4), 
+                        8 <- c(3), 9 <- c(2), 10 <- c(1)) 
+
+lapop17$g5I <- recode(lapop17$bragrup5, 1 <- c(10), 2 <- c(9), 
+                        3 <- c(8), 4 <- c(7), 5 <- c(6), 6 <- c(5), 7 <- c(4), 
+                        8 <- c(3), 9 <- c(2), 10 <- c(1)) 
+
+install.packages("data.table")#Pacote para programar a identificação da maior 
+#pontuação de desafeição.
+library(data.table)# Ativa o pacote.
+lapop17 <- data.table(lapop17)
+lapop17[, MAX := colnames(.SD)[max.col(.SD, ties.method="random")],
+        .SDcols = c("g1I", "g2I", "g3I", "g4I", "g5I")] #essas linhas criam 
+#uma variável indicando qual 
+#dos grupos registra a maior pontuação.
+#como a escala foi invertida, isso significa o "menos gostado". 
+#O método de resolução dos empates foi o "aleatório", então é feita a distribuição
+#randomica entre os grupos sempre que um entrevistado deu a mesma nota para dois 
+#ou mais grupos de referência. 
+
+#Teste de consistência interna das três medidas de tolerância
+#install.packages("psy") # Pacote para calculo do alpha
+library(psy)
+cronbach(lapop17[,11:13]) # = 0.85, ou seja, forte consistência interna. 
+#Da variável 11 a 13.
+
+#Índice de tolerância
+lapop17$IT30 <- lapop17$brad8 + lapop17$brad9 + lapop17$brad10
+
+#Padronização para 0-1
+lapop17$IT1 <- lapop17$IT30 / max(lapop17$IT, na.rm = TRUE)# recodifica para 0-1
+
+#Padronização para 0-10
+lapop17$IT10 <- lapop17$IT1*10
+
+#Medida tricotômica com corte pelos extremos
+lapop17$ITtri <- cut(lapop17$IT10, c(0, 3, 8, 10), 
+                     labels = c("Intolerante","Moderado", "Tolerante"))
+Table(lapop17$ITtri, percent=TRUE)
+
+#Ativar pacote descr
+library(descr)
+
+#Descritiva Tolerância
+freq(lapop17$ITtri)
+
+#Bivariadas Tolerância
+
+library(Kendall)
+
+itsex <- table(lapop17$Sexo, lapop17$ITtri)
+itsex <- prop.table(itsex, margin = 1)
+itsex * 100
+Kendall(lapop17$Sexo, lapop17$ITtri)
+
+itfxe <- table(lapop17$FxEt, lapop17$ITtri)
+itfxe <- prop.table(itfxe, margin = 1)
+itfxe * 100
+Kendall(lapop17$ITtri, lapop17$FxEt)
+
+itesc <- table(lapop17$Escol, lapop17$ITtri)
+itesc <- prop.table(itesc, margin = 1)
+itesc * 100
+Kendall(lapop17$ITtri, lapop17$Escol)
+
+itfxr <- table(lapop17$FxRe, lapop17$ITtri)
+itfxr <- prop.table(itfxr, margin = 1)
+itfxr * 100
+Kendall(lapop17$ITtri, lapop17$FxRe)
+
+#Descritiva Churchilliana
+freq(lapop17$absdem)
+
+#Bivariadas Churchilliana
+
+absdemsex <- table(lapop17$Sexo, lapop17$absdem)
+absdemsex <- prop.table(absdemsex, margin = 1)
+absdemsex * 100
+Kendall(lapop17$Sexo, lapop17$absdem)
+
+absdemfxet <- table(lapop17$FxEt, lapop17$absdem)
+absdemfxet <- prop.table(absdemfxet, margin = 1)
+absdemfxet * 100
+Kendall(lapop17$absdem, lapop17$FxEt)
+
+absdemEscol <- table(lapop17$Escol, lapop17$absdem)
+absdemEscol <- prop.table(absdemEscol, margin = 1)
+absdemEscol * 100
+Kendall(lapop17$absdem, lapop17$Escol)
+
+absdemfxre <- table(lapop17$FxRe, lapop17$absdem)
+absdemfxre <- prop.table(absdemfxre, margin = 1)
+absdemfxre * 100
+Kendall(lapop17$absdem, lapop17$FxRe)
+
+#Descritiva Golpe
+freq(lapop17$golpe)
+
+#Bivariadas Golpe
+golpesex <- table(lapop17$Sexo, lapop17$golpe)
+golpesex <- prop.table(golpesex, margin = 1)
+golpesex * 100
+Kendall(lapop17$Sexo, lapop17$golpe)
+
+golpefxet <- table(lapop17$FxEt, lapop17$golpe)
+golpefxet <- prop.table(golpefxet, margin = 1)
+golpefxet * 100
+Kendall(lapop17$golpe, lapop17$FxEt)
+
+golpeEscol <- table(lapop17$Escol, lapop17$golpe)
+golpeEscol <- prop.table(golpeEscol, margin = 1)
+golpeEscol * 100
+Kendall(lapop17$golpe, lapop17$Escol)
+
+golpefxre <- table(lapop17$FxRe, lapop17$golpe)
+golpefxre <- prop.table(golpefxre, margin = 1)
+golpefxre * 100
+Kendall(lapop17$golpe, lapop17$FxRe)
+
+#Regressões lineares
+options(scipen = 1000)
+lapop17$golpenum <- as.numeric(lapop17$golpe)
+lapop17$golpenum <- recode(lapop17$golpenum, 1 <- 2, 2 <- 1)
+lapop17$FxRenum <- as.numeric(lapop17$FxRe)
+lapop17$FxId3 <- as.numeric(lapop17$FxEt)
+lapop17$Sexonum <- as.numeric(lapop17$Sexo)
+lapop17$escol <- as.numeric(lapop17$Escol)
+lapop17$absdem <- as.numeric(lapop17$absdem)
+
+Mod.IT10ing4 <- lm(IT10 ~ ing4 + Sexonum + 
+                     FxRenum + escol + FxId3, data = lapop17)
+
+Mod.IT10golpe <- lm(IT10 ~ golpenum + Sexonum + 
+                      FxRenum + escol + FxId3, data = lapop17)
+
+library(sjPlot)
+
+tab_model(Mod.IT10ing4, Mod.IT10golpe,
+          show.ci = F, auto.label = T, show.se = T,
+          collapse.se = T, wrap.labels = 60, p.style = "stars")
+
+#Testes pré-requisitos para a regressão:
+
+par(mfrow=c(2,2))
+plot(Mod.IT10ing4)
+
+par(mfrow=c(2,2))
+plot(Mod.IT10golpe)
+
+
+#Teste da Variance Inflation Factor
+
+library(olsrr)
+ols_vif_tol(Mod.IT10ing4)
+
+ols_vif_tol(Mod.IT10golpe)
